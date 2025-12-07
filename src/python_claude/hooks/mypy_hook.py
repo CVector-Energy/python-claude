@@ -15,16 +15,28 @@ class MypyHook(Hook):
         super().__init__(hook_input)
 
     def run(self) -> int:
-        """Run mypy on the edited file if it's a Python file."""
-        file_path = self.input.file_path
-        if not file_path or not self.is_python_file(file_path):
-            return 0
+        """Run mypy on the edited file or entire project.
 
-        self.log(file_path)
+        If file_path is provided and is a Python file, run mypy on that file.
+        If no file_path is provided (e.g., Stop hook), run mypy on entire project.
+        """
+        file_path = self.input.file_path
+
+        # Determine what to type check
+        if file_path:
+            # File path provided - check if it's a Python file
+            if not self.is_python_file(file_path):
+                return 0
+            mypy_target = file_path
+        else:
+            # No file path (Stop hook) - check entire project
+            mypy_target = "."
+
+        self.log(mypy_target)
 
         # mypy writes errors to stdout, but only stderr is fed back to Claude
         result = subprocess.run(
-            ["poetry", "run", "mypy", file_path],
+            ["poetry", "run", "mypy", mypy_target],
             cwd=self.project_dir,
             stdout=sys.stderr,  # Redirect stdout to stderr for Claude
         )

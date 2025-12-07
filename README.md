@@ -31,7 +31,7 @@ This package provides hooks that can be used with Claude Code's hook system.
 
 - `edited` - Tracks edited Python files for deferred processing
 - `git status` - Shows git status
-- `mypy` - Runs mypy type checking on edited files
+- `mypy` - Runs mypy type checking on edited files when used as a PostToolUse hook or all files when used as a Stop hook
 - `pytest` - Runs pytest
 - `ruff check` - Runs ruff check on collected files with auto-fix
 - `ruff format` - Runs ruff format on edited files
@@ -64,6 +64,10 @@ Add hooks to your Claude Code settings.json:
           {
             "type": "command",
             "command": "poetry run python-claude ruff check"
+          },
+          {
+            "type": "command",
+            "command": "poetry run python-claude mypy"
           },
           {
             "type": "command",

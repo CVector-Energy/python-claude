@@ -1,6 +1,6 @@
 [project]
 name = "python-claude"
-version = "0.1.1"
+version = "0.2.0"
 description = "Python hooks for Claude Code"
 authors = [{name = "CVector", email = "support@cvector.com"}]
 readme = "README.md"

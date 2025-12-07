@@ -23,6 +23,10 @@
           },
           {
             "type": "command",
+            "command": "poetry run python-claude mypy"
+          },
+          {
+            "type": "command",
             "command": "poetry run python-claude pytest"
           }
         ]
