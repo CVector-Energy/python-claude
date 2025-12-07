@@ -1,6 +1,7 @@
 """Ruff check hook for Claude Code."""
 
 import subprocess
+import sys
 from pathlib import Path
 
 from python_claude.hooks.base import Hook, HookInput
@@ -26,7 +27,6 @@ class RuffCheckHook(Hook):
             self.log("No edited Python files to check")
             return 0
 
-        # Filter to only existing files
         files: list[str] = []
         for line in self.track_file.read_text().strip().split("\n"):
             file_path = line.strip()
@@ -43,6 +43,7 @@ class RuffCheckHook(Hook):
         result = subprocess.run(
             ["poetry", "run", "ruff", "check", "--fix", *files],
             cwd=self.project_dir,
+            stdout=sys.stderr,
         )
 
         exit_code = result.returncode

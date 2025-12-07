@@ -1,6 +1,7 @@
 """Pytest hook for Claude Code."""
 
 import subprocess
+import sys
 
 from python_claude.hooks.base import Hook, HookInput
 
@@ -18,6 +19,7 @@ class PytestHook(Hook):
         result = subprocess.run(
             ["poetry", "run", "pytest"],
             cwd=self.project_dir,
+            stdout=sys.stderr,
         )
 
         exit_code = result.returncode
