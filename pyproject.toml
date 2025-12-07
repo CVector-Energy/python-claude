@@ -1,0 +1,26 @@
+[project]
+name = "python-claude"
+version = "0.1.0"
+description = "Python hooks for Claude Code"
+authors = [{name = "CVector", email = "support@cvector.com"}]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+python-claude = "python_claude.cli:main"
+
+[tool.poetry]
+packages = [{ include = "python_claude", from = "src" }]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+mypy = "^1.15.0"
+ruff = "^0.11.10"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+strict = true
