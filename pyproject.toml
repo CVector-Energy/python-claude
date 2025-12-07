@@ -12,6 +12,7 @@ python-claude = "python_claude.cli:main"
 
 [tool.poetry]
 packages = [{ include = "python_claude", from = "src" }]
+include = ["src/python_claude/py.typed"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"

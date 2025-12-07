@@ -23,5 +23,9 @@ class PytestHook(Hook):
         )
 
         exit_code = result.returncode
+        # Transform pytest exit code 1 (test failures) to exit code 2
+        # for Claude Code to properly understand test failures
+        if exit_code == 1:
+            exit_code = 2
         self.log(f"exit {exit_code}")
         return exit_code
