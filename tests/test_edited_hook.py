@@ -19,8 +19,11 @@ class TestEditedHook:
             hook = EditedHook(hook_input)
             exit_code = hook.run()
             assert exit_code == 0
-            assert hook.track_file.exists()
-            assert "/test/file.py" in hook.track_file.read_text()
+            # Check both tracking files
+            assert hook.check_track_file.exists()
+            assert "/test/file.py" in hook.check_track_file.read_text()
+            assert hook.format_track_file.exists()
+            assert "/test/file.py" in hook.format_track_file.read_text()
 
     def test_ignores_non_python_file(self, tmp_path: Path) -> None:
         hook_input = HookInput(
@@ -32,7 +35,8 @@ class TestEditedHook:
             hook = EditedHook(hook_input)
             exit_code = hook.run()
             assert exit_code == 0
-            assert not hook.track_file.exists()
+            assert not hook.check_track_file.exists()
+            assert not hook.format_track_file.exists()
 
     def test_does_not_duplicate_files(self, tmp_path: Path) -> None:
         hook_input = HookInput(
@@ -45,5 +49,8 @@ class TestEditedHook:
             hook1.run()
             hook2 = EditedHook(hook_input)
             hook2.run()
-            content = hook2.track_file.read_text()
-            assert content.count("/test/file.py") == 1
+            # Check both tracking files don't have duplicates
+            check_content = hook2.check_track_file.read_text()
+            assert check_content.count("/test/file.py") == 1
+            format_content = hook2.format_track_file.read_text()
+            assert format_content.count("/test/file.py") == 1
