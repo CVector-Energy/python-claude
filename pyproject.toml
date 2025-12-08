@@ -1,11 +1,12 @@
 [project]
 name = "python-claude"
-version = "0.3.0"
+version = "0.3.1"
 description = "Python hooks for Claude Code"
 authors = [{name = "CVector", email = "support@cvector.com"}]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
+license = "MIT"
 
 [project.scripts]
 python-claude = "python_claude.cli:main"
