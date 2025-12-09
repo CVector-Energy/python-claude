@@ -52,4 +52,8 @@ class RuffCheckHook(Hook):
         if exit_code == 0:
             self.track_file.unlink(missing_ok=True)
 
+        # ruff check exit code 1 indicates a lint error that was not automatically fixed; return status 2 to signal claude to consider fixing it
+        if exit_code == 1:
+            return 2
+
         return exit_code
