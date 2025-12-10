@@ -23,6 +23,16 @@ class EditedHook(Hook):
         """Get the path to the ruff format tracking file."""
         return self.log_dir / "format-files.txt"
 
+    @property
+    def mypy_track_file(self) -> Path:
+        """Get the path to the mypy tracking file."""
+        return self.log_dir / "mypy-files.txt"
+
+    @property
+    def pytest_track_file(self) -> Path:
+        """Get the path to the pytest tracking file."""
+        return self.log_dir / "pytest-files.txt"
+
     def _track_file(self, track_file: Path, file_path: str) -> None:
         """Add file to tracking file if not already present."""
         tracked_files: set[str] = set()
@@ -40,8 +50,10 @@ class EditedHook(Hook):
         if not file_path or not self.is_python_file(file_path):
             return 0
 
-        # Track for both ruff check and ruff format
+        # Track for ruff check, ruff format, mypy, and pytest
         self._track_file(self.check_track_file, file_path)
         self._track_file(self.format_track_file, file_path)
+        self._track_file(self.mypy_track_file, file_path)
+        self._track_file(self.pytest_track_file, file_path)
 
         return 0

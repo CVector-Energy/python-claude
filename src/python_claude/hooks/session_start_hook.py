@@ -15,6 +15,12 @@ class SessionStartHook(Hook):
         """Print the introductory message."""
         print(
             "As you edit files, Claude Code Hooks will automatically run "
-            "ruff, mypy, and pytest. You don't need to run these commands manually."
+            "ruff, mypy, and pytest after you edit a file. You don't need "
+            "to run these commands manually. You can run these before making "
+            "an edit using:\n"
+            "- poetry run ruff format .\n"
+            "- poetry run ruff check .\n"
+            "- poetry run mypy .\n"
+            "- poetry run pytest\n"
         )
         return 0

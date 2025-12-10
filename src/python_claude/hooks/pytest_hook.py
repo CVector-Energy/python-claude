@@ -2,6 +2,7 @@
 
 import subprocess
 import sys
+from pathlib import Path
 
 from python_claude.hooks.base import Hook, HookInput
 
@@ -14,8 +15,20 @@ class PytestHook(Hook):
     def __init__(self, hook_input: HookInput | None = None) -> None:
         super().__init__(hook_input)
 
+    @property
+    def track_file(self) -> Path:
+        """Get the path to the edited files tracking file."""
+        return self.log_dir / "pytest-files.txt"
+
     def run(self) -> int:
-        """Run pytest."""
+        """Run pytest only if files were edited."""
+        # Check if any files were edited
+        if not self.track_file.exists() or self.track_file.stat().st_size == 0:
+            self.log("No edited Python files to test")
+            return 0
+
+        self.log("Running tests")
+
         result = subprocess.run(
             ["poetry", "run", "pytest"],
             cwd=self.project_dir,
@@ -23,9 +36,14 @@ class PytestHook(Hook):
         )
 
         exit_code = result.returncode
+        self.log(f"exit {exit_code}")
+
+        # Clean up tracking file on success
+        if exit_code == 0:
+            self.track_file.unlink(missing_ok=True)
+
         # Transform pytest exit code 1 (test failures) to exit code 2
         # for Claude Code to properly understand test failures
         if exit_code == 1:
-            exit_code = 2
-        self.log(f"exit {exit_code}")
+            return 2
         return exit_code
