@@ -24,9 +24,12 @@ class PytestHook(Hook):
     def run(self) -> int:
         """Run pytest if enabled and files were edited."""
         state = QualityCheckState(self.project_dir)
+        self.log(f"state:{state}")
         if not state.is_enabled("pytest"):
             self.log("Skipped (disabled)")
             return 0
+
+        self.log(f"{self.track_file}")
 
         # Check if any Python files were edited
         if not self.track_file.exists() or self.track_file.stat().st_size == 0:

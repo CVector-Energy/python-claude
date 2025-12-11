@@ -50,6 +50,8 @@ class EditedHook(Hook):
         if not file_path or not self.is_python_file(file_path):
             return 0
 
+        self.log(file_path)
+
         # Track for all quality checks
         self._track_file(self.check_track_file, file_path)
         self._track_file(self.format_track_file, file_path)
