@@ -25,7 +25,8 @@ class MypyHook(Hook):
         """Run mypy on the edited file or entire project if enabled.
 
         If file_path is provided and is a Python file, run mypy on that file.
-        If no file_path is provided (e.g., Stop hook), run mypy on entire project.
+        If no file_path is provided (e.g., Stop hook), run mypy on entire project
+        only if files were edited.
         """
         state = QualityCheckState(self.project_dir)
         if not state.is_enabled("mypy"):
@@ -41,7 +42,11 @@ class MypyHook(Hook):
                 return 0
             mypy_target = file_path
         else:
-            # No file path (Stop hook) - check entire project
+            # No file path (Stop hook) - check if any Python files were edited
+            if not self.track_file.exists() or self.track_file.stat().st_size == 0:
+                self.log("No edited Python files")
+                return 0
+            # Check entire project
             mypy_target = "."
 
         self.log(mypy_target)
@@ -55,6 +60,10 @@ class MypyHook(Hook):
 
         exit_code = result.returncode
         self.log(f"exit {exit_code}")
+
+        # Clean up tracking file on success (only for Stop hook)
+        if exit_code == 0 and not file_path:
+            self.track_file.unlink(missing_ok=True)
 
         # Map mypy exit code 1 (type errors) to exit code 2 for Claude Code correction
         if exit_code == 1:

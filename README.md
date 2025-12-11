@@ -14,10 +14,10 @@ Each time a file is edited:
 When Claude is ready to stop:
 - Reformat edited files with `ruff format`
 - Repair lints of edited files with `ruff check --fix`
-- Type-check edited files with `mypy`
-- Run the tests with `pytest`
+- Type-check the project with `mypy` (only if files were edited)
+- Run the tests with `pytest` (only if files were edited)
 
-Note: We defer `ruff format` and `ruff check` until Claude stops to avoid changing files while Claude is working. Changing files during editing would spoil Claude's edits and force it to reread files.
+Note: We defer all quality checks until Claude stops to avoid changing files while Claude is working. Changing files during editing would spoil Claude's edits and force it to reread files. Quality checks only run when at least one Python file has been edited during the session.
 ## Installation
 
 ```bash

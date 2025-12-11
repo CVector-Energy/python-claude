@@ -22,11 +22,18 @@ class PytestHook(Hook):
         return self.log_dir / "pytest-files.txt"
 
     def run(self) -> int:
-        """Run pytest if enabled."""
+        """Run pytest if enabled and files were edited."""
         state = QualityCheckState(self.project_dir)
         if not state.is_enabled("pytest"):
             self.log("Skipped (disabled)")
             return 0
+
+        # Check if any Python files were edited
+        if not self.track_file.exists() or self.track_file.stat().st_size == 0:
+            self.log("No edited Python files")
+            return 0
+
+        self.log("Running pytest")
 
         result = subprocess.run(
             ["poetry", "run", "pytest"],
@@ -40,4 +47,9 @@ class PytestHook(Hook):
         if exit_code == 1:
             exit_code = 2
         self.log(f"exit {exit_code}")
+
+        # Clean up tracking file on success
+        if exit_code == 0:
+            self.track_file.unlink(missing_ok=True)
+
         return exit_code

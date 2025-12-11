@@ -87,6 +87,10 @@ class TestMypyHook:
         )
         with patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(tmp_path)}):
             hook = MypyHook(hook_input)
+            # Create tracking file with edited files
+            hook.track_file.parent.mkdir(parents=True, exist_ok=True)
+            hook.track_file.write_text("/path/to/file.py\n")
+
             mock_result = MagicMock()
             mock_result.returncode = 0
             with patch("subprocess.run", return_value=mock_result) as mock_run:
@@ -96,6 +100,8 @@ class TestMypyHook:
                 # Verify it ran mypy on current directory
                 call_args = mock_run.call_args
                 assert call_args[0][0] == ["poetry", "run", "mypy", "."]
+                # Verify tracking file was cleaned up on success
+                assert not hook.track_file.exists()
 
     def test_stop_hook_type_errors(self, tmp_path: Path) -> None:
         """Test Stop hook with type errors (exit 1) transforms to exit code 2."""
@@ -110,11 +116,35 @@ class TestMypyHook:
         )
         with patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(tmp_path)}):
             hook = MypyHook(hook_input)
+            # Create tracking file with edited files
+            hook.track_file.parent.mkdir(parents=True, exist_ok=True)
+            hook.track_file.write_text("/path/to/file.py\n")
+
             mock_result = MagicMock()
             mock_result.returncode = 1
             with patch("subprocess.run", return_value=mock_result):
                 exit_code = hook.run()
                 assert exit_code == 2
+
+    def test_stop_hook_no_files_edited(self, tmp_path: Path) -> None:
+        """Test Stop hook is skipped when no files were edited."""
+        hook_input = HookInput(
+            session_id="abc123",
+            tool_input={},
+            raw={
+                "session_id": "abc123",
+                "hook_event_name": "Stop",
+                "stop_hook_active": True,
+            },
+        )
+        with patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(tmp_path)}):
+            hook = MypyHook(hook_input)
+            # Don't create tracking file
+            with patch("subprocess.run") as mock_run:
+                exit_code = hook.run()
+                assert exit_code == 0
+                # Verify subprocess was not called
+                mock_run.assert_not_called()
 
     def test_empty_file_path_runs_full_check(self, tmp_path: Path) -> None:
         """Test empty string file_path is treated as Stop hook."""
@@ -125,6 +155,10 @@ class TestMypyHook:
         )
         with patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(tmp_path)}):
             hook = MypyHook(hook_input)
+            # Create tracking file with edited files
+            hook.track_file.parent.mkdir(parents=True, exist_ok=True)
+            hook.track_file.write_text("/path/to/file.py\n")
+
             mock_result = MagicMock()
             mock_result.returncode = 0
             with patch("subprocess.run", return_value=mock_result) as mock_run:
