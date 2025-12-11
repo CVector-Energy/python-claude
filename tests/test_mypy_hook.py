@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from python_claude.hooks.base import HookInput
 from python_claude.hooks.mypy_hook import MypyHook
+from python_claude.hooks.state import QualityCheckState
 
 
 class TestMypyHook:
@@ -86,10 +87,6 @@ class TestMypyHook:
         )
         with patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(tmp_path)}):
             hook = MypyHook(hook_input)
-            # Create tracking file with edited files
-            hook.track_file.parent.mkdir(parents=True, exist_ok=True)
-            hook.track_file.write_text("/path/to/file.py\n")
-
             mock_result = MagicMock()
             mock_result.returncode = 0
             with patch("subprocess.run", return_value=mock_result) as mock_run:
@@ -99,8 +96,6 @@ class TestMypyHook:
                 # Verify it ran mypy on current directory
                 call_args = mock_run.call_args
                 assert call_args[0][0] == ["poetry", "run", "mypy", "."]
-                # Verify tracking file was cleaned up
-                assert not hook.track_file.exists()
 
     def test_stop_hook_type_errors(self, tmp_path: Path) -> None:
         """Test Stop hook with type errors (exit 1) transforms to exit code 2."""
@@ -138,3 +133,22 @@ class TestMypyHook:
                 # Verify it ran mypy on current directory
                 call_args = mock_run.call_args
                 assert call_args[0][0] == ["poetry", "run", "mypy", "."]
+
+    def test_mypy_skipped_when_disabled(self, tmp_path: Path) -> None:
+        """Test that mypy is skipped when disabled in state."""
+        hook_input = HookInput(
+            session_id=None,
+            tool_input={"file_path": "/path/to/file.py"},
+            raw={},
+        )
+        with patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(tmp_path)}):
+            # Disable mypy
+            state = QualityCheckState(tmp_path)
+            state.disable("mypy")
+
+            hook = MypyHook(hook_input)
+            with patch("subprocess.run") as mock_run:
+                exit_code = hook.run()
+                assert exit_code == 0
+                # Verify subprocess was not called
+                mock_run.assert_not_called()

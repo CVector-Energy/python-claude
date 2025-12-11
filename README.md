@@ -37,6 +37,7 @@ This package provides hooks that can be used with Claude Code's hook system.
 - `ruff check` - Runs ruff check on collected files with auto-fix (used in Stop hook)
 - `ruff format` - Runs ruff format on collected files (used in Stop hook)
 - `session start` - Prints introductory message about automatic hooks
+- `toggle <check>` - Enable/disable a quality check (pytest, mypy, or ruff)
 
 ### Claude Code Settings
 
@@ -95,6 +96,35 @@ Add hooks to your Claude Code settings.json:
   }
 }
 ```
+
+### Toggling Quality Checks
+
+You can temporarily disable quality checks when needed. This is useful when:
+- Tests are failing and you want to focus on type errors first
+- You want to make multiple changes before running checks
+- You're working on a feature that temporarily breaks tests
+
+#### Using Slash Commands (Recommended)
+
+The easiest way is to use the provided slash commands in Claude Code:
+
+- `/pytest` - Toggle pytest on/off
+- `/mypy` - Toggle mypy on/off
+- `/ruff` - Toggle ruff (format + check) on/off
+
+Each command will show whether the check is now enabled or disabled.
+
+#### Using CLI Directly
+
+You can also use the CLI directly:
+
+```bash
+poetry run python-claude toggle pytest
+poetry run python-claude toggle mypy
+poetry run python-claude toggle ruff
+```
+
+The toggle state persists across Claude Code sessions, stored in `.claude/quality-checks.json` (which is gitignored). All checks are enabled by default.
 
 ## Development
 

@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from python_claude.hooks.base import Hook, HookInput
+from python_claude.hooks.state import QualityCheckState
 
 
 class MypyHook(Hook):
@@ -21,11 +22,16 @@ class MypyHook(Hook):
         return self.log_dir / "mypy-files.txt"
 
     def run(self) -> int:
-        """Run mypy on the edited file or entire project.
+        """Run mypy on the edited file or entire project if enabled.
 
         If file_path is provided and is a Python file, run mypy on that file.
         If no file_path is provided (e.g., Stop hook), run mypy on entire project.
         """
+        state = QualityCheckState(self.project_dir)
+        if not state.is_enabled("mypy"):
+            self.log("Skipped (disabled)")
+            return 0
+
         file_path = self.input.file_path
 
         # Determine what to type check

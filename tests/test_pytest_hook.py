@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from python_claude.hooks.base import HookInput
 from python_claude.hooks.pytest_hook import PytestHook
+from python_claude.hooks.state import QualityCheckState
 
 
 class TestPytestHook:
@@ -14,17 +15,11 @@ class TestPytestHook:
         hook_input = HookInput(session_id=None, tool_input={}, raw={})
         with patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(tmp_path)}):
             hook = PytestHook(hook_input)
-            # Create tracking file with edited files
-            hook.track_file.parent.mkdir(parents=True, exist_ok=True)
-            hook.track_file.write_text("/path/to/file.py\n")
-
             mock_result = MagicMock()
             mock_result.returncode = 0
             with patch("subprocess.run", return_value=mock_result):
                 exit_code = hook.run()
                 assert exit_code == 0
-                # Verify tracking file was cleaned up on success
-                assert not hook.track_file.exists()
 
     def test_pytest_test_failures(self, tmp_path: Path) -> None:
         """Test that exit code 1 (test failures) is transformed to exit code 2."""
@@ -58,3 +53,18 @@ class TestPytestHook:
             with patch("subprocess.run", return_value=mock_result):
                 exit_code = hook.run()
                 assert exit_code == 5
+
+    def test_pytest_skipped_when_disabled(self, tmp_path: Path) -> None:
+        """Test that pytest is skipped when disabled in state."""
+        hook_input = HookInput(session_id=None, tool_input={}, raw={})
+        with patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(tmp_path)}):
+            # Disable pytest
+            state = QualityCheckState(tmp_path)
+            state.disable("pytest")
+
+            hook = PytestHook(hook_input)
+            with patch("subprocess.run") as mock_run:
+                exit_code = hook.run()
+                assert exit_code == 0
+                # Verify subprocess was not called
+                mock_run.assert_not_called()

@@ -10,6 +10,7 @@ from python_claude.hooks import (
     RuffCheckHook,
     RuffFormatHook,
     SessionStartHook,
+    ToggleHook,
 )
 from python_claude.hooks.base import Hook
 
@@ -21,6 +22,7 @@ HOOKS: dict[str, type[Hook]] = {
     "ruff check": RuffCheckHook,
     "ruff format": RuffFormatHook,
     "session start": SessionStartHook,
+    "toggle": ToggleHook,
 }
 
 

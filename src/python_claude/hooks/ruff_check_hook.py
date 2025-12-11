@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from python_claude.hooks.base import Hook, HookInput
+from python_claude.hooks.state import QualityCheckState
 
 
 class RuffCheckHook(Hook):
@@ -21,7 +22,12 @@ class RuffCheckHook(Hook):
         return self.log_dir / "edited-files.txt"
 
     def run(self) -> int:
-        """Run ruff check on all tracked files."""
+        """Run ruff check on all tracked files if enabled."""
+        state = QualityCheckState(self.project_dir)
+        if not state.is_enabled("ruff"):
+            self.log("Skipped (disabled)")
+            return 0
+
         # Check if tracking file exists and has content
         if not self.track_file.exists() or self.track_file.stat().st_size == 0:
             self.log("No edited Python files to check")

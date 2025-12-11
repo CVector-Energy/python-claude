@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from python_claude.hooks.base import Hook, HookInput
+from python_claude.hooks.state import QualityCheckState
 
 
 class PytestHook(Hook):
@@ -21,7 +22,12 @@ class PytestHook(Hook):
         return self.log_dir / "pytest-files.txt"
 
     def run(self) -> int:
-        """Run pytest."""
+        """Run pytest if enabled."""
+        state = QualityCheckState(self.project_dir)
+        if not state.is_enabled("pytest"):
+            self.log("Skipped (disabled)")
+            return 0
+
         result = subprocess.run(
             ["poetry", "run", "pytest"],
             cwd=self.project_dir,

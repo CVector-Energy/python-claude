@@ -159,3 +159,6 @@ cython_debug/
 .idea/
 .terraform.lock.hcl
 .terraform/
+
+# Quality check state (local user preference)
+.claude/quality-checks.json
