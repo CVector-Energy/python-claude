@@ -1,0 +1,51 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "poetry run python-claude session start"
+          },
+          {
+            "type": "command",
+            "command": "poetry run python-claude git status"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "poetry run python-claude ruff format"
+          },
+          {
+            "type": "command",
+            "command": "poetry run python-claude ruff check"
+          },
+          {
+            "type": "command",
+            "command": "poetry run python-claude mypy"
+          },
+          {
+            "type": "command",
+            "command": "poetry run python-claude pytest"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "poetry run python-claude edited"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -29,9 +29,14 @@ class PytestHook(Hook):
         )
 
         exit_code = result.returncode
+        self.log(f"exit {exit_code}")
+
+        # Clean up tracking file on success
+        if exit_code == 0:
+            self.track_file.unlink(missing_ok=True)
+
         # Transform pytest exit code 1 (test failures) to exit code 2
         # for Claude Code to properly understand test failures
         if exit_code == 1:
-            exit_code = 2
-        self.log(f"exit {exit_code}")
+            return 2
         return exit_code

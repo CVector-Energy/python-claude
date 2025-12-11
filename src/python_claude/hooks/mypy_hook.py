@@ -50,6 +50,10 @@ class MypyHook(Hook):
         exit_code = result.returncode
         self.log(f"exit {exit_code}")
 
+        # Clean up tracking file on success
+        if exit_code == 0:
+            self.track_file.unlink(missing_ok=True)
+
         # Map mypy exit code 1 (type errors) to exit code 2 for Claude Code correction
         if exit_code == 1:
             return 2

@@ -1,0 +1,12 @@
+{
+  "name": "python-claude",
+  "version": "0.3.2",
+  "description": "Python hooks for Claude Code - automatically runs ruff, mypy, and pytest",
+  "author": {
+    "name": "CVector",
+    "email": "support@cvector.com"
+  },
+  "license": "MIT",
+  "keywords": ["python", "poetry", "ruff", "mypy", "pytest", "linting", "type-checking", "testing"],
+  "hooks": "./hooks/hooks.json"
+}
