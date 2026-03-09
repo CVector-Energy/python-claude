@@ -1,7 +1,7 @@
 # python-claude
 
 Python hooks for Claude Code for projects using:
-- poetry
+- uv
 - ruff
 - mypy
 - pytest
@@ -21,7 +21,7 @@ Note: We defer all quality checks until Claude stops to avoid changing files whi
 ## Installation
 
 ```bash
-poetry add python-claude
+uv add python-claude
 ```
 
 ## Usage
@@ -51,11 +51,11 @@ Add hooks to your Claude Code settings.json:
         "hooks": [
           {
             "type": "command",
-            "command": "poetry run python-claude session start"
+            "command": "uv run python-claude session start"
           },
           {
             "type": "command",
-            "command": "poetry run python-claude git status"
+            "command": "uv run python-claude git status"
           }
         ]
       }
@@ -65,19 +65,19 @@ Add hooks to your Claude Code settings.json:
         "hooks": [
           {
             "type": "command",
-            "command": "poetry run python-claude ruff format"
+            "command": "uv run python-claude ruff format"
           },
           {
             "type": "command",
-            "command": "poetry run python-claude ruff check"
+            "command": "uv run python-claude ruff check"
           },
           {
             "type": "command",
-            "command": "poetry run python-claude mypy"
+            "command": "uv run python-claude mypy"
           },
           {
             "type": "command",
-            "command": "poetry run python-claude pytest"
+            "command": "uv run python-claude pytest"
           }
         ]
       }
@@ -88,7 +88,7 @@ Add hooks to your Claude Code settings.json:
         "hooks": [
           {
             "type": "command",
-            "command": "poetry run python-claude edited"
+            "command": "uv run python-claude edited"
           }
         ]
       }
@@ -119,9 +119,9 @@ Each command will show whether the check is now enabled or disabled.
 You can also use the CLI directly:
 
 ```bash
-poetry run python-claude toggle pytest
-poetry run python-claude toggle mypy
-poetry run python-claude toggle ruff
+uv run python-claude toggle pytest
+uv run python-claude toggle mypy
+uv run python-claude toggle ruff
 ```
 
 The toggle state persists across Claude Code sessions, stored in `.claude/quality-checks.json` (which is gitignored). All checks are enabled by default.
@@ -129,8 +129,8 @@ The toggle state persists across Claude Code sessions, stored in `.claude/qualit
 ## Development
 
 ```bash
-poetry install
-poetry run pytest
-poetry run ruff check
-poetry run mypy src
+uv sync
+uv run pytest
+uv run ruff check
+uv run mypy src
 ```
