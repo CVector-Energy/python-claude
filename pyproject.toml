@@ -22,18 +22,19 @@ classifiers = [
 [project.scripts]
 python-claude = "python_claude.cli:main"
 
-[tool.poetry]
-packages = [{ include = "python_claude", from = "src" }]
-include = ["src/python_claude/py.typed"]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.5"
-mypy = "^1.15.0"
-ruff = "^0.11.10"
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5,<9",
+    "mypy>=1.15.0,<2",
+    "ruff>=0.11.10,<1",
+]
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/python_claude"]
 
 [tool.mypy]
 strict = true
