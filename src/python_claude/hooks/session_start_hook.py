@@ -47,10 +47,10 @@ class SessionStartHook(Hook):
                 f"{checks_list} after you edit a file. You don't need "
                 f"to run these commands manually. You can run these before making "
                 f"an edit using:\n"
-                f"- poetry run ruff format .\n"
-                f"- poetry run ruff check .\n"
-                f"- poetry run mypy .\n"
-                f"- poetry run pytest"
+                f"- uv run ruff format .\n"
+                f"- uv run ruff check .\n"
+                f"- uv run mypy .\n"
+                f"- uv run pytest"
             )
         else:
             additional_context = (

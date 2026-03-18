@@ -47,7 +47,7 @@ class RuffFormatHook(Hook):
         self.log(f"Formatting {len(files)} files: {' '.join(files)}")
 
         result = subprocess.run(
-            ["poetry", "run", "ruff", "format", *files],
+            ["uv", "run", "ruff", "format", *files],
             cwd=self.project_dir,
             stdout=sys.stderr,
         )

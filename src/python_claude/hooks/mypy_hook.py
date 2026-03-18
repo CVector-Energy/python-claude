@@ -53,7 +53,7 @@ class MypyHook(Hook):
 
         # mypy writes errors to stdout, but only stderr is fed back to Claude
         result = subprocess.run(
-            ["poetry", "run", "mypy", mypy_target],
+            ["uv", "run", "mypy", mypy_target],
             cwd=self.project_dir,
             stdout=sys.stderr,  # Redirect stdout to stderr for Claude
         )
