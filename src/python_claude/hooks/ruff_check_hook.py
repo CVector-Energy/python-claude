@@ -47,7 +47,7 @@ class RuffCheckHook(Hook):
         self.log(f"Checking {len(files)} files: {' '.join(files)}")
 
         result = subprocess.run(
-            ["poetry", "run", "ruff", "check", "--fix", *files],
+            ["uv", "run", "ruff", "check", "--fix", *files],
             cwd=self.project_dir,
             stdout=sys.stderr,
         )

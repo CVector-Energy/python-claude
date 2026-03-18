@@ -39,7 +39,7 @@ class PytestHook(Hook):
         self.log("Running pytest")
 
         result = subprocess.run(
-            ["poetry", "run", "pytest"],
+            ["uv", "run", "pytest"],
             cwd=self.project_dir,
             stdout=sys.stderr,
         )

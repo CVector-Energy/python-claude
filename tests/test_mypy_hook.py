@@ -27,7 +27,7 @@ class TestMypyHook:
                 mock_run.assert_called_once()
                 # Verify it ran mypy on the specific file
                 call_args = mock_run.call_args
-                assert call_args[0][0] == ["poetry", "run", "mypy", "/path/to/file.py"]
+                assert call_args[0][0] == ["uv", "run", "mypy", "/path/to/file.py"]
 
     def test_python_file_type_errors(self, tmp_path: Path) -> None:
         """Test mypy type errors (exit 1) are transformed to exit code 2."""
@@ -99,7 +99,7 @@ class TestMypyHook:
                 mock_run.assert_called_once()
                 # Verify it ran mypy on current directory
                 call_args = mock_run.call_args
-                assert call_args[0][0] == ["poetry", "run", "mypy", "."]
+                assert call_args[0][0] == ["uv", "run", "mypy", "."]
                 # Verify tracking file was cleaned up on success
                 assert not hook.track_file.exists()
 
@@ -166,7 +166,7 @@ class TestMypyHook:
                 assert exit_code == 0
                 # Verify it ran mypy on current directory
                 call_args = mock_run.call_args
-                assert call_args[0][0] == ["poetry", "run", "mypy", "."]
+                assert call_args[0][0] == ["uv", "run", "mypy", "."]
 
     def test_mypy_skipped_when_disabled(self, tmp_path: Path) -> None:
         """Test that mypy is skipped when disabled in state."""
