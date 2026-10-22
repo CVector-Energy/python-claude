@@ -4,7 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from python_claude.hooks.base import Hook, HookInput
+from python_claude.hooks.base import Hook, HookInput, combine_exit_codes
 from python_claude.hooks.state import QualityCheckState
 
 
@@ -29,33 +29,36 @@ class RuffFormatHook(Hook):
             return 0
 
         # Check if tracking file exists and has content
-        if not self.track_file.exists() or self.track_file.stat().st_size == 0:
+        tracked = self.read_tracked_files(self.track_file)
+        if not tracked:
             self.log("No edited Python files to format")
             return 0
 
-        files: list[str] = []
-        for line in self.track_file.read_text().strip().split("\n"):
-            file_path = line.strip()
-            if file_path and Path(file_path).exists():
-                files.append(file_path)
-
+        files = [file_path for file_path in tracked if Path(file_path).exists()]
         if not files:
             self.log("No existing Python files to format")
             self.track_file.unlink(missing_ok=True)
             return 0
 
-        self.log(f"Formatting {len(files)} files: {' '.join(files)}")
+        exit_codes: list[int] = []
+        remaining: list[str] = []
+        for checkout, checkout_files in self.group_by_checkout(files).items():
+            self.log(
+                f"Formatting {len(checkout_files)} files in {checkout}: {' '.join(checkout_files)}"
+            )
 
-        result = subprocess.run(
-            ["uv", "run", "ruff", "format", *files],
-            cwd=self.project_dir,
-            stdout=sys.stderr,
-        )
+            result = subprocess.run(
+                ["uv", "run", "ruff", "format", *checkout_files],
+                cwd=checkout,
+                stdout=sys.stderr,
+            )
 
-        exit_code = result.returncode
-        self.log(f"exit {exit_code}")
+            exit_code = result.returncode
+            self.log(f"exit {exit_code}")
 
-        if exit_code == 0:
-            self.track_file.unlink(missing_ok=True)
+            if exit_code != 0:
+                remaining.extend(checkout_files)
+            exit_codes.append(exit_code)
 
-        return exit_code
+        self.retain_tracked_files(self.track_file, remaining)
+        return combine_exit_codes(exit_codes)

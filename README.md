@@ -18,6 +18,10 @@ When Claude is ready to stop:
 - Run the tests with `pytest` (only if files were edited)
 
 Note: We defer all quality checks until Claude stops to avoid changing files while Claude is working. Changing files during editing would spoil Claude's edits and force it to reread files. Quality checks only run when at least one Python file has been edited during the session.
+
+### Git worktrees
+
+Claude Code (for example, the desktop app) may start a session in the main checkout and then do its work in a git worktree. The hooks are configured, and `CLAUDE_PROJECT_DIR` points, at the main checkout, but the quality checks run in the checkout that contains each edited file. Worktrees nested inside the main checkout (such as `.claude/worktrees/<name>`) are recognized by their own `.git` file. If the project lives in a subdirectory of its repository, the checks run in the same subdirectory of the worktree. Checkouts without edits from this session are not checked, so unrelated failures in the main checkout are not reported to the agent. Session tracking state and toggle settings stay in the main checkout's `.claude` directory.
 ## Installation
 
 ```bash
