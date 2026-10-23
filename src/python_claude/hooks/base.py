@@ -38,6 +38,37 @@ class HookInput:
         return cls(session_id=session_id, tool_input=tool_input, raw=data)
 
 
+def _git_root(path: Path) -> Path | None:
+    """Find the nearest directory containing a .git entry (a directory in a main checkout, a file in a worktree)."""
+    for candidate in [path, *path.parents]:
+        if (candidate / ".git").exists():
+            return candidate
+    return None
+
+
+def checkout_dir(path: Path, project_dir: Path) -> Path:
+    """Find the directory that plays the role of project_dir in the checkout containing path.
+
+    Claude Code may edit files in a git worktree rather than in the checkout where the session started (CLAUDE_PROJECT_DIR). Quality checks must run in the worktree, at the same relative location as the project directory within its repository.
+    """
+    root = _git_root(path)
+    if root is None:
+        return project_dir
+    project_root = _git_root(project_dir)
+    if project_root is not None:
+        candidate = root / project_dir.relative_to(project_root)
+        if path.is_relative_to(candidate):
+            return candidate
+    return root
+
+
+def combine_exit_codes(exit_codes: list[int]) -> int:
+    """Combine exit codes from several checkouts, preferring 2 so that Claude is asked to fix any failure it can act on."""
+    if 2 in exit_codes:
+        return 2
+    return next((code for code in exit_codes if code != 0), 0)
+
+
 class Hook(ABC):
     """Base class for Claude Code hooks."""
 
@@ -58,6 +89,37 @@ class Hook(ABC):
             else:
                 self._project_dir = Path.cwd()
         return self._project_dir
+
+    @property
+    def working_dir(self) -> Path:
+        """Get the checkout containing the session's current working directory."""
+        cwd = self.input.raw.get("cwd")
+        if not cwd:
+            return self.project_dir
+        return checkout_dir(Path(cwd), self.project_dir)
+
+    def group_by_checkout(self, files: list[str]) -> dict[Path, list[str]]:
+        """Group edited files by the checkout that contains them."""
+        groups: dict[Path, list[str]] = {}
+        for file_path in files:
+            checkout = checkout_dir(Path(file_path), self.project_dir)
+            groups.setdefault(checkout, []).append(file_path)
+        return groups
+
+    def read_tracked_files(self, track_file: Path) -> list[str]:
+        """Read the files recorded in a tracking file."""
+        if not track_file.exists():
+            return []
+        return [
+            line.strip() for line in track_file.read_text().split("\n") if line.strip()
+        ]
+
+    def retain_tracked_files(self, track_file: Path, files: list[str]) -> None:
+        """Replace the contents of a tracking file, removing it when no files remain."""
+        if files:
+            track_file.write_text("".join(f"{file_path}\n" for file_path in files))
+        else:
+            track_file.unlink(missing_ok=True)
 
     @property
     def log_dir(self) -> Path:

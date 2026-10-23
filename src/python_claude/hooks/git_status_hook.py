@@ -18,6 +18,6 @@ class GitStatusHook(Hook):
         print("# git status")
         result = subprocess.run(
             ["git", "status"],
-            cwd=self.project_dir,
+            cwd=self.working_dir,
         )
         return result.returncode

@@ -4,7 +4,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-from python_claude.hooks.base import Hook, HookInput
+from python_claude.hooks.base import (
+    Hook,
+    HookInput,
+    checkout_dir,
+    combine_exit_codes,
+)
 from python_claude.hooks.state import QualityCheckState
 
 
@@ -35,37 +40,45 @@ class MypyHook(Hook):
 
         file_path = self.input.file_path
 
-        # Determine what to type check
         if file_path:
             # File path provided - check if it's a Python file
             if not self.is_python_file(file_path):
                 return 0
-            mypy_target = file_path
-        else:
-            # No file path (Stop hook) - check if any Python files were edited
-            if not self.track_file.exists() or self.track_file.stat().st_size == 0:
-                self.log("No edited Python files")
-                return 0
-            # Check entire project
-            mypy_target = "."
+            checkout = checkout_dir(Path(file_path), self.project_dir)
+            exit_code = self._run_mypy(file_path, checkout)
+            # Map mypy exit code 1 (type errors) to exit code 2 for Claude Code correction
+            return 2 if exit_code == 1 else exit_code
 
-        self.log(mypy_target)
+        # No file path (Stop hook) - check if any Python files were edited
+        files = self.read_tracked_files(self.track_file)
+        if not files:
+            self.log("No edited Python files")
+            return 0
+
+        # Check the entire project in each checkout where files were edited
+        exit_codes: list[int] = []
+        remaining: list[str] = []
+        for checkout, checkout_files in self.group_by_checkout(files).items():
+            exit_code = self._run_mypy(".", checkout)
+            if exit_code == 1:
+                exit_code = 2
+            if exit_code != 0:
+                remaining.extend(checkout_files)
+            exit_codes.append(exit_code)
+
+        self.retain_tracked_files(self.track_file, remaining)
+        return combine_exit_codes(exit_codes)
+
+    def _run_mypy(self, mypy_target: str, checkout: Path) -> int:
+        """Run mypy on the target in the given checkout and return its exit code."""
+        self.log(f"{mypy_target} in {checkout}")
 
         # mypy writes errors to stdout, but only stderr is fed back to Claude
         result = subprocess.run(
             ["uv", "run", "mypy", mypy_target],
-            cwd=self.project_dir,
+            cwd=checkout,
             stdout=sys.stderr,  # Redirect stdout to stderr for Claude
         )
 
-        exit_code = result.returncode
-        self.log(f"exit {exit_code}")
-
-        # Clean up tracking file on success (only for Stop hook)
-        if exit_code == 0 and not file_path:
-            self.track_file.unlink(missing_ok=True)
-
-        # Map mypy exit code 1 (type errors) to exit code 2 for Claude Code correction
-        if exit_code == 1:
-            return 2
-        return exit_code
+        self.log(f"exit {result.returncode}")
+        return result.returncode

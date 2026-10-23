@@ -4,7 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from python_claude.hooks.base import Hook, HookInput
+from python_claude.hooks.base import Hook, HookInput, combine_exit_codes
 from python_claude.hooks.state import QualityCheckState
 
 
@@ -32,27 +32,33 @@ class PytestHook(Hook):
         self.log(f"{self.track_file}")
 
         # Check if any Python files were edited
-        if not self.track_file.exists() or self.track_file.stat().st_size == 0:
+        files = self.read_tracked_files(self.track_file)
+        if not files:
             self.log("No edited Python files")
             return 0
 
-        self.log("Running pytest")
+        exit_codes: list[int] = []
+        remaining: list[str] = []
+        for checkout, checkout_files in self.group_by_checkout(files).items():
+            self.log(f"Running pytest in {checkout}")
 
-        result = subprocess.run(
-            ["uv", "run", "pytest"],
-            cwd=self.project_dir,
-            stdout=sys.stderr,
-        )
+            result = subprocess.run(
+                ["uv", "run", "pytest"],
+                cwd=checkout,
+                stdout=sys.stderr,
+            )
 
-        exit_code = result.returncode
-        # Transform pytest exit code 1 (test failures) to exit code 2
-        # for Claude Code to properly understand test failures
-        if exit_code == 1:
-            exit_code = 2
-        self.log(f"exit {exit_code}")
+            exit_code = result.returncode
+            # Transform pytest exit code 1 (test failures) to exit code 2
+            # for Claude Code to properly understand test failures
+            if exit_code == 1:
+                exit_code = 2
+            self.log(f"exit {exit_code}")
 
-        # Clean up tracking file on success
-        if exit_code == 0:
-            self.track_file.unlink(missing_ok=True)
+            # Keep tracking files of checkouts that still fail
+            if exit_code != 0:
+                remaining.extend(checkout_files)
+            exit_codes.append(exit_code)
 
-        return exit_code
+        self.retain_tracked_files(self.track_file, remaining)
+        return combine_exit_codes(exit_codes)
